@@ -185,7 +185,7 @@ examples!(
     context_menu,
     date_picker[internationalized, range, multi_month, unavailable_dates],
     dialog,
-    drag_and_drop_list[removable],
+    drag_and_drop_list[removable, board],
     dropdown_menu,
     hover_card,
     input,
