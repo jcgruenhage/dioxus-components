@@ -15,7 +15,8 @@ repository = "https://github.com/DioxusLabs/components"
 dioxus.workspace = true
 dioxus-attributes = { path = "../dioxus-attributes" }
 dioxus-sdk-time = "0.7.0"
-time = { version = "0.3.44", features = ["std", "macros", "parsing", "local-offset"] }
+time = { version = "0.3.44", features = ["std", "macros", "parsing", "local-offset"], optional = true }
+jiff = { version = "0.2", optional = true }
 num-integer = "0.1.46"
 tracing.workspace = true
 serde = { version = "1.0", features = ["derive"] }
@@ -28,6 +29,11 @@ lazy-js-bundle = "0.7.9"
 dioxus-ssr = "0.7.0"
 
 [features]
-default = ["router"]
+default = ["router", "time"]
 router = ["dioxus/router"]
-web = ["time/wasm-bindgen"]
+# Umbrella for wasm wiring. Only the `time` backend needs a wasm-bindgen
+# flip; `jiff` is wasm-clean out of the box, so `web` is a no-op for
+# jiff-only builds (`--no-default-features --features "jiff,web"`).
+web = ["time?/wasm-bindgen"]
+time = ["dep:time"]
+jiff = ["dep:jiff"]

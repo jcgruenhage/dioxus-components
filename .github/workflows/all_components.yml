@@ -64,7 +64,7 @@ jobs:
           # Switch to the local version of dioxus-primitives
           cargo add dioxus-primitives --path ../primitives
           # Make sure it still builds
-          cargo check --all-features
+          cargo check --all-features --features dioxus-primitives/time
   add-each-component:
     if: github.event.pull_request.draft == false
     name: Add Each Components
@@ -112,7 +112,7 @@ jobs:
             # Switch to the local version of dioxus-primitives
             cargo add dioxus-primitives --path ../primitives
             # Make sure it still builds
-            cargo check --all-features
+            cargo check --all-features --features dioxus-primitives/time
             # Undo changes
             dx components remove --all --path ..
             cd ../preview/src/components/

@@ -9,6 +9,7 @@ use dioxus::core::{current_scope_id, use_drop};
 use dioxus::prelude::*;
 use dioxus::prelude::{asset, manganis, Asset};
 use dioxus_core::AttributeValue::Text;
+#[cfg(feature = "time")]
 use time::OffsetDateTime;
 
 pub use dioxus_attributes;
@@ -23,6 +24,7 @@ pub mod collapsible;
 pub mod color_picker;
 pub mod combobox;
 pub mod context_menu;
+pub mod date_backend;
 pub mod date_picker;
 pub mod dialog;
 pub mod drag_and_drop_list;
@@ -323,11 +325,13 @@ impl ContentAlign {
     }
 }
 
+#[cfg(feature = "time")]
 pub(crate) trait LocalDateExt {
     /// A small extension method function to get the local date with a fallback to UTC date if this fails
     fn now_local_date() -> time::Date;
 }
 
+#[cfg(feature = "time")]
 impl LocalDateExt for time::OffsetDateTime {
     fn now_local_date() -> time::Date {
         OffsetDateTime::now_local()
