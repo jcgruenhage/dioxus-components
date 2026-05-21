@@ -29,3 +29,33 @@ Combobox::<String> {
     }
 }
 ```
+
+## Multi-select
+
+`ComboboxMulti` toggles options in and out of a `Vec<T>` and keeps the popup
+open across picks. When the popup is closed the input displays the comma-joined
+text of the selected options.
+
+```rust
+let mut values = use_signal(|| Some(Vec::<String>::new()));
+let mut query = use_signal(String::new);
+
+ComboboxMulti::<String> {
+    values: Some(values.into()),
+    on_values_change: move |next: Vec<String>| {
+        values.set(Some(next));
+    },
+    query: Some(query()),
+    on_query_change: move |next| query.set(next),
+    placeholder: "Select frameworks...",
+    aria_label: "Select frameworks",
+    list_aria_label: "Frameworks",
+    ComboboxEmpty { "No framework found." }
+    ComboboxOption::<String> {
+        index: 0usize,
+        value: "next".to_string(),
+        text_value: "Next.js",
+        "Next.js"
+    }
+}
+```

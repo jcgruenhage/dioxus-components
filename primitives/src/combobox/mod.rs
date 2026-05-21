@@ -9,7 +9,7 @@ mod context;
 pub use components::{
     Combobox, ComboboxEmpty, ComboboxEmptyProps, ComboboxInput, ComboboxInputProps,
     ComboboxItemIndicator, ComboboxItemIndicatorProps, ComboboxList, ComboboxListProps,
-    ComboboxOption, ComboboxOptionProps, ComboboxProps,
+    ComboboxMulti, ComboboxMultiProps, ComboboxOption, ComboboxOptionProps, ComboboxProps,
 };
 
 pub use context::default_combobox_filter;
