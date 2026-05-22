@@ -3,7 +3,7 @@ name: Playwright Tests
 on:
   push:
     branches:
-      - main
+      - fork
     paths:
       - /**
       - playwright/**
@@ -42,8 +42,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
+        shardIndex: [1, 2, 3, 4, 5, 6, 7, 8]
+        shardTotal: [8]
     steps:
       # Do our best to cache the toolchain and node install steps
       - uses: actions/checkout@v4
@@ -69,5 +69,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: blob-report-${{ matrix.shardIndex }}
-          path: blob-report
+          path: playwright/blob-report
           retention-days: 1
