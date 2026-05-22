@@ -200,6 +200,37 @@ pub(crate) fn use_single_selectable_value<T: Clone + PartialEq + 'static>(
     (values, set_value)
 }
 
+pub(crate) fn use_multi_selectable_value<T: Clone + PartialEq + 'static>(
+    controlled_values: ReadSignal<Option<Vec<T>>>,
+    default_values: Vec<T>,
+    on_change: Callback<Vec<T>>,
+    component_name: &'static str,
+) -> (Memo<Vec<RcPartialEqValue>>, Callback<RcPartialEqValue>) {
+    let (multi_values, set_internal) = use_controlled(controlled_values, default_values, on_change);
+
+    let values = use_memo(move || {
+        multi_values()
+            .into_iter()
+            .map(RcPartialEqValue::new)
+            .collect()
+    });
+    let set_value = use_callback(move |incoming: RcPartialEqValue| {
+        let value_t = incoming
+            .as_ref::<T>()
+            .unwrap_or_else(|| panic!("{component_name} and option value types must match"))
+            .clone();
+        let mut current = multi_values();
+        if let Some(pos) = current.iter().position(|v| v == &value_t) {
+            current.remove(pos);
+        } else {
+            current.push(value_t);
+        }
+        set_internal.call(current);
+    });
+
+    (values, set_value)
+}
+
 pub(crate) fn use_selectable_root(
     values: Memo<Vec<RcPartialEqValue>>,
     set_value: Callback<RcPartialEqValue>,
