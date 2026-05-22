@@ -26,6 +26,7 @@ pub struct ComboboxListProps {
 pub fn ComboboxList(props: ComboboxListProps) -> Element {
     let ctx = use_context::<ComboboxContext>();
     let open = ctx.selectable.open;
+    let multi = ctx.selectable.selection_mode.is_multiple();
     let listbox = use_listbox_container(props.id, ctx.selectable);
     let render = listbox.render;
 
@@ -35,6 +36,7 @@ pub fn ComboboxList(props: ComboboxListProps) -> Element {
                 id: listbox.id,
                 role: "listbox",
                 "data-state": if open() { "open" } else { "closed" },
+                aria_multiselectable: multi,
                 onpointerdown: move |event| {
                     event.prevent_default();
                 },

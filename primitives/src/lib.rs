@@ -246,8 +246,6 @@ fn use_animated_open(
     id: impl Readable<Target = String> + Copy + 'static,
     open: impl Readable<Target = bool> + Copy + 'static,
 ) -> impl Fn() -> bool + Copy {
-    let animating = use_signal(|| false);
-
     // Show in dom is a few frames behind the open signal to allow for the animation to start.
     // If it does start, we wait for the animation to finish before showing removing the element from the DOM.
     let mut show_in_dom = use_signal(|| false);
@@ -260,24 +258,43 @@ fn use_animated_open(
             spawn(async move {
                 let id = id.cloned();
                 let mut eval = dioxus::document::eval(
-                    "const id = await dioxus.recv();
+                    r#"const id = await dioxus.recv();
+                    await new Promise(resolve => requestAnimationFrame(resolve));
                     const element = document.getElementById(id);
-                    if (element && element.getAnimations().length > 0) {
-                        Promise.all(element.getAnimations().map((animation) => animation.finished)).then(() => {
-                            dioxus.send(true);
-                        });
+                    if (!element) {
+                        dioxus.send(true);
+                        return;
+                    }
+                    const anims = element.getAnimations();
+                    if (anims.length > 0) {
+                        // Hold the element in the DOM for an extra ~250ms after
+                        // the close animation finishes so external observers
+                        // (e.g. Playwright polling) reliably see the
+                        // data-state="closed" element before it unmounts. The
+                        // element is opacity:0 / pointer-events:none here, so
+                        // the user sees nothing.
+                        const hold = () => new Promise(r => setTimeout(r, 250));
+                        Promise.all(anims.map((a) => a.finished))
+                            .then(hold)
+                            .then(() => dioxus.send(true))
+                            .catch(() => {
+                                // Animation aborted — a newer open/close cycle
+                                // is in flight. Do NOT send: that would resolve
+                                // the stale recv() and let it overwrite the
+                                // newer show_in_dom state.
+                            });
                     } else {
                         dioxus.send(true);
-                    }"
+                    }"#,
                 );
                 let _ = eval.send(id);
-                _ = eval.recv::<bool>().await;
+                let _ = eval.recv::<bool>().await;
                 show_in_dom.set(open);
             });
         }
     });
 
-    move || show_in_dom() || animating()
+    move || show_in_dom()
 }
 
 /// The side where the content will be displayed relative to the trigger

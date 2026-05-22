@@ -3,7 +3,7 @@ name: Stylelint Checks
 on:
   push:
     branches:
-      - main
+      - fork
     paths:
       - /**
       - preview/**/*.css

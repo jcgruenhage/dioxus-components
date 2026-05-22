@@ -1,6 +1,6 @@
 {
   "name": "drag_and_drop_list",
-  "description": "Allows users to create vertically sortable lists supporting drag and drop, touch or keyboard input.",
+  "description": "Allows users to create vertically sortable lists with drag and drop, touch or keyboard input. Multiple lists can be combined into a kanban-style board where items move between columns.",
   "authors": ["Evan Almloff"],
   "exclude": ["variants", "docs.md", "component.json"],
   "cargoDependencies": [

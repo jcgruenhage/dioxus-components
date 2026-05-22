@@ -16,6 +16,9 @@ strum = { version = "0.27.2", features = ["derive"] }
 tracing = { workspace = true }
 time = { version = "0.3.44", features = ["std", "macros"] }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1"
+
 
 [build-dependencies]
 dioxus = { workspace = true }

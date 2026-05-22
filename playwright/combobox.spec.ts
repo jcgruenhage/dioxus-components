@@ -5,7 +5,7 @@ const variantUrl = (variant: string) =>
     `http://127.0.0.1:8080/component/?name=combobox&variant=${variant}&`;
 
 const input = (page: Page) =>
-    page.getByRole("combobox", { name: "Select framework" });
+    page.getByRole("combobox", { name: "Select framework", exact: true });
 
 const content = (page: Page) =>
     page.locator("[role='listbox'][data-state='open']");
@@ -277,6 +277,136 @@ test("touch selection commits and closes", async ({ browser, browserName }) => {
 
         await expect(content(page)).toHaveCount(0);
         await expect(trigger).toHaveValue("Dioxus");
+    } finally {
+        await context.close();
+    }
+});
+
+const multiInput = (page: Page) =>
+    page.getByRole("combobox", { name: "Select frameworks" });
+
+test("multi-select toggles options and stays open", async ({ page }) => {
+    await page.goto(variantUrl("multi"), { timeout: 20 * 60 * 1000 });
+    await page.waitForLoadState('networkidle');
+
+    const trigger = multiInput(page);
+    // Default values from the demo: Dioxus and SolidStart
+    await expect(trigger).toHaveValue(/Dioxus/);
+    await expect(trigger).toHaveValue(/SolidStart/);
+
+    await trigger.click();
+    const menu = list(page);
+    await expect(menu).toHaveAttribute("data-state", "open");
+    await expect(menu).toHaveAttribute("aria-multiselectable", "true");
+
+    const dioxus = menu.getByRole("option", { name: "Dioxus" });
+    const remix = menu.getByRole("option", { name: "Remix" });
+
+    await expect(dioxus).toHaveAttribute("aria-selected", "true");
+    await expect(remix).toHaveAttribute("aria-selected", "false");
+
+    // Click an unselected option — toggles on without closing
+    await remix.click();
+    await expect(menu).toHaveAttribute("data-state", "open");
+    await expect(remix).toHaveAttribute("aria-selected", "true");
+
+    // Click an already-selected option — toggles off without closing
+    await dioxus.click();
+    await expect(menu).toHaveAttribute("data-state", "open");
+    await expect(dioxus).toHaveAttribute("aria-selected", "false");
+
+    // Escape closes the menu without selecting
+    await page.keyboard.press("Escape");
+    await expect(content(page)).toHaveCount(0);
+    // Closed-state input reflects the updated multi-selection
+    await expect(trigger).toHaveValue(/SolidStart/);
+    await expect(trigger).toHaveValue(/Remix/);
+    await expect(trigger).not.toHaveValue(/Dioxus/);
+});
+
+test("multi-select tabbing past the listbox closes the popup", async ({ page }) => {
+    await page.goto(variantUrl("multi"), { timeout: 20 * 60 * 1000 });
+    await page.waitForLoadState('networkidle');
+
+    const trigger = multiInput(page);
+    await trigger.click();
+    await expect(content(page)).toBeVisible();
+
+    await page.keyboard.press("Tab");
+    await expect(content(page)).toHaveCount(0);
+});
+
+test("multi-select clicking outside closes the popup", async ({ page }) => {
+    await page.goto(variantUrl("multi"), { timeout: 20 * 60 * 1000 });
+    await page.waitForLoadState('networkidle');
+
+    const trigger = multiInput(page);
+    await trigger.click();
+    await expect(content(page)).toBeVisible();
+
+    await page.mouse.click(2, 2);
+    await expect(content(page)).toHaveCount(0);
+});
+
+test("multi-select keyboard Enter toggles without closing", async ({ page }) => {
+    await page.goto(variantUrl("multi"), { timeout: 20 * 60 * 1000 });
+    await page.waitForLoadState('networkidle');
+
+    const trigger = multiInput(page);
+    await trigger.click();
+    const menu = list(page);
+    await expect(menu).toHaveAttribute("data-state", "open");
+
+    // ArrowDown highlights the first option via aria-activedescendant
+    await page.keyboard.press("ArrowDown");
+    const next = menu.getByRole("option", { name: "Next.js" });
+    await expect(next).toHaveAttribute("data-highlighted", "true");
+    await expect(trigger).toHaveAttribute(
+        "aria-activedescendant",
+        await next.getAttribute("id"),
+    );
+    await expect(next).toHaveAttribute("aria-selected", "false");
+
+    // Enter toggles the highlighted option on without closing
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveAttribute("data-state", "open");
+    await expect(next).toHaveAttribute("aria-selected", "true");
+
+    // ArrowDown again, then Enter on a default-selected option toggles it off
+    // (the demo has Dioxus and SolidStart preselected)
+    await page.keyboard.type("dio");
+    const dioxus = menu.getByRole("option", { name: "Dioxus" });
+    await expect(dioxus).toBeVisible();
+    await page.keyboard.press("ArrowDown");
+    await expect(dioxus).toHaveAttribute("data-highlighted", "true");
+    await expect(dioxus).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveAttribute("data-state", "open");
+    await expect(dioxus).toHaveAttribute("aria-selected", "false");
+});
+
+test("mobile: multi-select tapping options keeps the popup open", async ({ browser }) => {
+    const context = await browser.newContext({ ...devices["iPhone 13"] });
+    try {
+        const page = await context.newPage();
+        await page.goto(variantUrl("multi"), { timeout: 20 * 60 * 1000 });
+        await page.waitForLoadState('networkidle');
+
+        const trigger = multiInput(page);
+        await trigger.tap();
+
+        const menu = list(page);
+        await expect(menu).toHaveAttribute("data-state", "open");
+
+        const remix = menu.getByRole("option", { name: "Remix" });
+        await remix.tap();
+        await expect(menu).toHaveAttribute("data-state", "open");
+        await expect(remix).toHaveAttribute("aria-selected", "true");
+
+        const dioxus = menu.getByRole("option", { name: "Dioxus" });
+        await dioxus.tap();
+        await expect(menu).toHaveAttribute("data-state", "open");
+        await expect(dioxus).toHaveAttribute("aria-selected", "false");
     } finally {
         await context.close();
     }

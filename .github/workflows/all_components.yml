@@ -3,7 +3,7 @@ name: Add Components
 on:
   push:
     branches:
-      - main
+      - fork
     paths:
       - /**
       - preview/**/*.rs

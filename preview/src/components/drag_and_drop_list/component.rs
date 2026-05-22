@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
 use dioxus_icons::lucide::{GripVertical, X};
 use dioxus_primitives::drag_and_drop_list::{
-    self, DragAndDropContext, DragAndDropDropIndicatorProps, DragAndDropItemContext,
-    DragAndDropListItemProps, DragAndDropListItemsProps,
+    self, in_drag_and_drop_board, DragAndDropContext, DragAndDropDropIndicatorProps,
+    DragAndDropItemContext, DragAndDropListItemProps, DragAndDropListItemsProps,
 };
 
 #[css_module("/src/components/drag_and_drop_list/style.css")]
@@ -21,11 +21,18 @@ pub struct DragAndDropListProps {
     #[props(default)]
     pub aria_label: Option<String>,
 
+    /// Column id within a parent `DragAndDropBoard`. Defaults to the
+    /// primitive's single-column sentinel; only meaningful when this
+    /// list is nested inside a board.
+    #[props(default)]
+    pub column_id: Option<String>,
+
     /// Additional attributes to apply to the list element.
     #[props(extends = GlobalAttributes)]
     pub attributes: Vec<Attribute>,
 
     /// The children of the list component.
+    #[props(default)]
     pub children: Element,
 }
 
@@ -58,17 +65,29 @@ pub fn DragAndDropList(props: DragAndDropListProps) -> Element {
         })
         .collect();
 
+    // When nested in a `DragAndDropBoard`, the board owns the
+    // instructions block and live region — render them only when
+    // this list is standalone.
+    let nested = in_drag_and_drop_board();
+    let column_id = props
+        .column_id
+        .unwrap_or_else(|| "__dnd_default__".to_string());
     rsx! {
         drag_and_drop_list::DragAndDropList {
             class: Styles::dx_dnd_list,
             items,
+            column_id,
             aria_label: props.aria_label,
             attributes: props.attributes,
-            drag_and_drop_list::DragAndDropInstructions {}
+            if !nested {
+                drag_and_drop_list::DragAndDropInstructions {}
+            }
             DragAndDropListItems {
                 aria_label,
             }
-            drag_and_drop_list::DragAndDropLiveRegion {}
+            if !nested {
+                drag_and_drop_list::DragAndDropLiveRegion {}
+            }
             {props.children}
         }
     }

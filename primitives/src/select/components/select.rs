@@ -1,13 +1,13 @@
 //! Main Select and SelectMulti component implementations.
 
-use core::panic;
 use std::time::Duration;
 
 use crate::{
     selectable::{
-        use_selectable_root, use_single_selectable_value, RcPartialEqValue, SelectionMode,
+        use_multi_selectable_value, use_selectable_root, use_single_selectable_value,
+        RcPartialEqValue, SelectionMode,
     },
-    use_controlled, use_effect, Controlled,
+    use_effect, Controlled,
 };
 use dioxus::prelude::*;
 use dioxus_core::Task;
@@ -299,28 +299,12 @@ pub fn Select<T: Clone + PartialEq + 'static>(props: SelectProps<T>) -> Element 
 /// - `data-state`: Indicates the current state of the select. Values are `open` or `closed`.
 #[component]
 pub fn SelectMulti<T: Clone + PartialEq + 'static>(props: SelectMultiProps<T>) -> Element {
-    let (multi_values, set_multi_internal) =
-        use_controlled(props.values, props.default_values, props.on_values_change);
-
-    let values = use_memo(move || {
-        multi_values()
-            .into_iter()
-            .map(RcPartialEqValue::new)
-            .collect()
-    });
-    let set_value = use_callback(move |value: RcPartialEqValue| {
-        let value_t = value
-            .as_ref::<T>()
-            .unwrap_or_else(|| panic!("The values of select and all options must match types"))
-            .clone();
-        let mut current = multi_values();
-        if let Some(pos) = current.iter().position(|v| v == &value_t) {
-            current.remove(pos);
-        } else {
-            current.push(value_t);
-        }
-        set_multi_internal.call(current);
-    });
+    let (values, set_value) = use_multi_selectable_value(
+        props.values,
+        props.default_values,
+        props.on_values_change,
+        "select",
+    );
 
     let open = use_select_root(
         values,
