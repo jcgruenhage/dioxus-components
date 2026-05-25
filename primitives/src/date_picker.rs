@@ -675,11 +675,11 @@ fn DateSegment<T: Clone + Copy + Integer + FromStr + Display + 'static>(
 
         let value = text.parse::<T>().map(|v| v.min(max)).ok();
         if let Some(value) = value {
-            let inRange = value >= min && value <= max;
+            let in_range = value >= min && value <= max;
 
             // If adding a new digit would exceed max, move to next segment
-            let newValue = (text + "0").parse::<T>().unwrap_or(value);
-            if inRange && newValue > max {
+            let new_value = (text + "0").parse::<T>().unwrap_or(value);
+            if in_range && new_value > max {
                 ctx.focus.focus_next();
             }
         };
