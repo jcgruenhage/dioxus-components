@@ -14,7 +14,12 @@ opt-level = "z"
 debug = false
 lto = true
 codegen-units = 1
-strip = true
+# TODO(@jcgruenhage): revert to `strip = true` once the board-render
+# panic surfaced by the wasm preview is fixed — see the in-flight
+# investigation tracked alongside the DragAndDropBoard work. Keeping
+# panic messages and symbol names makes the playwright traces
+# actionable in the meantime.
+strip = false
 incremental = false
 
 [profile.dev]
